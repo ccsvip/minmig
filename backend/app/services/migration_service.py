@@ -74,13 +74,20 @@ async def run_migration(task_id: int, semaphore: asyncio.Semaphore, concurrency:
                 return
 
             # Create MinIO clients
+            src_secret = decrypt_secret(src_conn.secret_key)
+            tgt_secret = decrypt_secret(tgt_conn.secret_key)
+            
+            # Debug logging
+            await add_log(db, task_id, "info", f"Source connection: {src_conn.endpoint}, Access Key: {src_conn.access_key}")
+            await add_log(db, task_id, "info", f"Target connection: {tgt_conn.endpoint}, Access Key: {tgt_conn.access_key}")
+            
             src_client = get_minio_client(
                 src_conn.endpoint, src_conn.access_key,
-                decrypt_secret(src_conn.secret_key), src_conn.use_ssl, src_conn.region,
+                src_secret, src_conn.use_ssl, src_conn.region,
             )
             tgt_client = get_minio_client(
                 tgt_conn.endpoint, tgt_conn.access_key,
-                decrypt_secret(tgt_conn.secret_key), tgt_conn.use_ssl, tgt_conn.region,
+                tgt_secret, tgt_conn.use_ssl, tgt_conn.region,
             )
 
             # Update task status
@@ -115,19 +122,19 @@ async def run_migration(task_id: int, semaphore: asyncio.Semaphore, concurrency:
             copied_bytes = 0
             errors = 0
 
-            async def copy_one(obj: dict) -> tuple[bool, str, int]:
+            async def copy_one(obj: dict) -> tuple[bool, str, int, str]:
                 nonlocal copied, copied_bytes, errors
                 if cancel_event.is_set():
-                    return False, "", 0
+                    return False, "", 0, ""
                 async with semaphore:
-                    success = await asyncio.to_thread(
+                    success, error_msg = await asyncio.to_thread(
                         copy_object, src_client, task.source_bucket,
                         obj["key"], tgt_client, task.target_bucket,
                     )
                     if success:
-                        return True, obj["key"], obj["size"]
+                        return True, obj["key"], obj["size"], ""
                     else:
-                        return False, obj["key"], 0
+                        return False, obj["key"], 0, error_msg
 
             # Process in batches
             batch_size = concurrency * 2
@@ -137,7 +144,7 @@ async def run_migration(task_id: int, semaphore: asyncio.Semaphore, concurrency:
                 batch = objects[i:i + batch_size]
                 results = await asyncio.gather(*[copy_one(obj) for obj in batch])
 
-                for success, key, size in results:
+                for success, key, size, error_msg in results:
                     if cancel_event.is_set():
                         break
                     if success:
@@ -145,7 +152,10 @@ async def run_migration(task_id: int, semaphore: asyncio.Semaphore, concurrency:
                         copied_bytes += size
                     else:
                         errors += 1
-                        await add_log(db, task_id, "error", f"Failed to copy: {key}", key)
+                        error_detail = f"Failed to copy: {key}"
+                        if error_msg:
+                            error_detail += f" - Error: {error_msg}"
+                        await add_log(db, task_id, "error", error_detail, key)
 
                 task.copied_objects = copied
                 task.copied_bytes = copied_bytes

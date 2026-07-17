@@ -17,6 +17,7 @@ export default function Connections() {
   const [bucketsModalOpen, setBucketsModalOpen] = useState(false);
   const [bucketsConnId, setBucketsConnId] = useState<number | null>(null);
   const [bucketsLoading, setBucketsLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [form] = Form.useForm();
 
   const fetch = async () => {
@@ -47,15 +48,22 @@ export default function Connections() {
 
   const handleSubmit = async () => {
     const values = await form.validateFields();
-    if (editing) {
-      await client.put(`/connections/${editing.id}`, values);
-      message.success('连接已更新');
-    } else {
-      await client.post('/connections', values);
-      message.success('连接已创建');
+    setSubmitting(true);
+    try {
+      if (editing) {
+        await client.put(`/connections/${editing.id}`, values);
+        message.success('连接已更新');
+      } else {
+        await client.post('/connections', values);
+        message.success('连接已创建');
+      }
+      setModalOpen(false);
+      fetch();
+    } catch {
+      message.error('操作失败，请检查网络或后端服务');
+    } finally {
+      setSubmitting(false);
     }
-    setModalOpen(false);
-    fetch();
   };
 
   const handleDelete = async (id: number) => {
@@ -124,6 +132,7 @@ export default function Connections() {
         open={modalOpen}
         onOk={handleSubmit}
         onCancel={() => setModalOpen(false)}
+        confirmLoading={submitting}
         width={500}
       >
         <Form form={form} layout="vertical">

@@ -1,4 +1,5 @@
 from minio import Minio
+from minio.commonconfig import CopySource
 from urllib.parse import urlparse
 
 
@@ -45,11 +46,25 @@ def copy_object(
     object_key: str,
     dest_client: Minio,
     dest_bucket: str,
-) -> bool:
+) -> tuple[bool, str]:
     try:
-        # Use copy_source as a dict
-        copy_source = {"bucket": src_bucket, "object": object_key}
-        dest_client.copy_object(dest_bucket, object_key, copy_source)
-        return True
+        # For cross-server copy, we need to download and upload
+        # Get the object from source
+        response = src_client.get_object(src_bucket, object_key)
+        try:
+            # Get the object stats to know the size
+            stat = src_client.stat_object(src_bucket, object_key)
+            # Upload to destination
+            dest_client.put_object(
+                dest_bucket,
+                object_key,
+                response,
+                length=stat.size,
+                content_type=stat.content_type or 'application/octet-stream',
+            )
+            return True, ""
+        finally:
+            response.close()
+            response.release_conn()
     except Exception as e:
-        return False
+        return False, str(e)
