@@ -1,12 +1,28 @@
 import { useState, useEffect } from 'react';
 import {
-  Table, Button, Modal, Form, Input, Switch,
-  Space, Typography, Popconfirm, message, Select,
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Switch,
+  Space,
+  Typography,
+  Popconfirm,
+  message,
+  Select,
+  Tag,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  ReloadOutlined,
+  ApiOutlined,
+} from '@ant-design/icons';
 import client, { Connection, ConnectionForm, BucketInfo } from '../api/client';
 
-const { Title } = Typography;
+const { Text } = Typography;
 
 export default function Connections() {
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -86,46 +102,94 @@ export default function Connections() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Title level={4}>MinIO 连接管理</Title>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
         <Space>
-          <Button icon={<ReloadOutlined />} onClick={fetch}>刷新</Button>
+          <Button icon={<ReloadOutlined />} onClick={fetch}>
+            刷新
+          </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             新建连接
           </Button>
         </Space>
       </div>
 
-      <Table
-        dataSource={connections}
-        rowKey="id"
-        loading={loading}
-        columns={[
-          { title: '名称', dataIndex: 'name' },
-          { title: 'Endpoint', dataIndex: 'endpoint' },
-          { title: 'Access Key', dataIndex: 'access_key' },
-          {
-            title: 'SSL',
-            dataIndex: 'use_ssl',
-            render: (v: boolean) => (v ? '是' : '否'),
-          },
-          { title: 'Region', dataIndex: 'region' },
-          {
-            title: '操作',
-            render: (_: any, record: Connection) => (
-              <Space>
-                <Button size="small" onClick={() => viewBuckets(record.id)}>
-                  查看桶
-                </Button>
-                <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(record)} />
-                <Popconfirm title="确定删除？" onConfirm={() => handleDelete(record.id)}>
-                  <Button size="small" danger icon={<DeleteOutlined />} />
-                </Popconfirm>
-              </Space>
-            ),
-          },
-        ]}
-      />
+      {connections.length === 0 && !loading ? (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '72px 24px',
+            background: '#fff',
+            borderRadius: 14,
+            border: '1px dashed #e2e8f0',
+          }}
+        >
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 16,
+              background: 'rgba(99,102,241,0.1)',
+              color: '#6366f1',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 26,
+              marginBottom: 16,
+            }}
+          >
+            <ApiOutlined />
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#1e293b', marginBottom: 4 }}>
+            还没有 MinIO 连接
+          </div>
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            新建一个连接以开始管理你的桶
+          </Text>
+          <div style={{ marginTop: 20 }}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+              新建连接
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Table
+          className="mm-table"
+          dataSource={connections}
+          rowKey="id"
+          loading={loading}
+          columns={[
+            {
+              title: '名称',
+              dataIndex: 'name',
+              render: (v: string) => <Text strong>{v}</Text>,
+            },
+            { title: 'Endpoint', dataIndex: 'endpoint' },
+            { title: 'Access Key', dataIndex: 'access_key' },
+            {
+              title: 'SSL',
+              dataIndex: 'use_ssl',
+              render: (v: boolean) =>
+                v ? <Tag color="green" style={{ borderRadius: 6, border: 'none' }}>是</Tag> : <Text type="secondary">否</Text>,
+            },
+            { title: 'Region', dataIndex: 'region' },
+            {
+              title: '操作',
+              align: 'right',
+              render: (_: any, record: Connection) => (
+                <Space>
+                  <Button size="small" onClick={() => viewBuckets(record.id)}>
+                    查看桶
+                  </Button>
+                  <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(record)} />
+                  <Popconfirm title="确定删除？" onConfirm={() => handleDelete(record.id)}>
+                    <Button size="small" danger icon={<DeleteOutlined />} />
+                  </Popconfirm>
+                </Space>
+              ),
+            },
+          ]}
+        />
+      )}
 
       <Modal
         title={editing ? '编辑连接' : '新建连接'}
@@ -135,7 +199,7 @@ export default function Connections() {
         confirmLoading={submitting}
         width={500}
       >
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
           <Form.Item name="name" label="连接名称" rules={[{ required: true }]}>
             <Input placeholder="例如：生产环境" />
           </Form.Item>
@@ -172,6 +236,7 @@ export default function Connections() {
           rowKey="name"
           loading={bucketsLoading}
           pagination={false}
+          style={{ marginTop: 8 }}
           columns={[
             { title: '桶名称', dataIndex: 'name' },
             { title: '创建时间', dataIndex: 'creation_date' },

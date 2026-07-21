@@ -1,0 +1,161 @@
+/* ===== MinMig Global Styles ===== */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f6f7fb;
+  color: #1e293b;
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.18);
+  color: #1e293b;
+}
+
+/* Refined scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.28);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.48);
+}
+
+/* ===== Animations ===== */
+@keyframes mm-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mm-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mm-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mm-page {
+  animation: mm-fade-in-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mm-fade {
+  animation: mm-fade-in 0.4s ease both;
+}
+
+.mm-pop {
+  animation: mm-pop 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Staggered card entrance */
+.mm-stagger > * {
+  animation: mm-fade-in-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.mm-stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.mm-stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.mm-stagger > *:nth-child(3) { animation-delay: 0.10s; }
+.mm-stagger > *:nth-child(4) { animation-delay: 0.14s; }
+.mm-stagger > *:nth-child(5) { animation-delay: 0.18s; }
+.mm-stagger > *:nth-child(6) { animation-delay: 0.22s; }
+
+/* ===== Sider / Menu refinements ===== */
+.mm-sider {
+  background: #ffffff !important;
+}
+.mm-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+}
+.mm-sider .ant-menu-light,
+.mm-sider .ant-menu {
+  background: transparent !important;
+  border-inline-end: none !important;
+}
+.mm-sider .ant-menu-item {
+  width: calc(100% - 24px) !important;
+  margin: 4px 12px !important;
+  border-radius: 10px !important;
+}
+.mm-sider .ant-menu-item-selected {
+  font-weight: 600;
+}
+
+/* Collapsed trigger */
+.mm-sider .ant-layout-sider-trigger {
+  background: #ffffff;
+  border-top: 1px solid #eef0f4;
+  color: #64748b;
+}
+
+/* ===== Card polish ===== */
+.mm-card {
+  border: 1px solid #eef0f4 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04),
+    0 1px 2px rgba(15, 23, 42, 0.03) !important;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.mm-card-hover:hover {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
+  transform: translateY(-2px);
+}
+
+/* ===== Table polish ===== */
+.mm-table .ant-table {
+  border-radius: 14px;
+}
+.mm-table .ant-table-thead > tr > th {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* ===== Terminal log scrollbar ===== */
+.mm-terminal::-webkit-scrollbar {
+  width: 6px;
+}
+.mm-terminal::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+}
